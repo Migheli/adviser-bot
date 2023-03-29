@@ -5,7 +5,7 @@ from .models import Chapter, Article
 
 
 @admin.register(Chapter)
-class RestaurantAdmin(admin.ModelAdmin):
+class ChapterAdmin(admin.ModelAdmin):
 
     list_display = [
         'name'
@@ -13,7 +13,7 @@ class RestaurantAdmin(admin.ModelAdmin):
 
 
 @admin.register(Article)
-class RestaurantAdmin(admin.ModelAdmin):
+class ArticleAdmin(admin.ModelAdmin):
 
     list_display = [
         'name',
