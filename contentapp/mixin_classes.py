@@ -4,7 +4,7 @@ from django.utils.html import format_html
 class ImagePreviewMixin():
 
     def get_preview_image(self, obj):
-        url = obj.photo.url
+        url = obj.picture.url
         height = '200'
         return format_html(
             '<img src="{}" width="{}" height={} />',

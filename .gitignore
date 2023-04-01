@@ -78,6 +78,9 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+#media-files in dev-project
+media/
+
 # IPython
 profile_default/
 ipython_config.py

@@ -9,7 +9,7 @@ import requests
 
 import redis
 from textwrap import dedent
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constants
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constants, InputMediaPhoto
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler, CallbackContext
 
@@ -22,16 +22,12 @@ env.read_env()
 _database = None
 
 
-
-
 def get_chapter_details_keyboard(articles):
 
 	keyboard = [[InlineKeyboardButton(article.name, callback_data=article.id)] for article in articles]
-
 	
 	keyboard.append([InlineKeyboardButton('Корзина', callback_data='at_cart')])
 	return InlineKeyboardMarkup(keyboard)
-
 
 
 def show_chapter_details(update: Update, context: CallbackContext):
@@ -48,6 +44,26 @@ def show_chapter_details(update: Update, context: CallbackContext):
 		context.bot.send_message(chat_id=update.effective_chat.id, text='*Что Вас интересует?:*', parse_mode='HTML', reply_markup=reply_markup)
 
 	return 'HANDLE_ARTICLE'
+
+
+def show_article_details(update: Update, context: CallbackContext):
+    article=Article.objects.get(id=update.callback_query.data)
+
+    if article.pictures:
+        pictures = article.pictures.all()
+        images = []
+        for picture in pictures:
+            with open(f'media/{picture}', 'rb') as image:
+                images.append(InputMediaPhoto(image))
+        context.bot.send_media_group(chat_id=update.effective_chat.id, media=images)                  
+
+
+
+
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=article.text, parse_mode='HTML')
+    
+    return 'HANDLE_ARTICLE'
 
 
 
@@ -104,7 +120,7 @@ def handle_users_reply(update: Update, context: CallbackContext):
     states_functions = {
         'START': show_main_menu,
         'HANDLE_MENU': show_chapter_details,
-        'HANDLE_ARTICLE_DETAILS': show_article_details
+        'HANDLE_ARTICLE': show_article_details
     }
     state_handler = states_functions[user_state]
     next_state = state_handler(update, context)
