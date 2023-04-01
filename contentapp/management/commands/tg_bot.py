@@ -13,12 +13,42 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constan
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler, CallbackContext
 
+
 logger = logging.getLogger(__name__)
 
 env = Env()
 env.read_env()
 
 _database = None
+
+
+
+
+def get_chapter_details_keyboard(articles):
+
+	keyboard = [[InlineKeyboardButton(article.name, callback_data=article.id)] for article in articles]
+
+	
+	keyboard.append([InlineKeyboardButton('Корзина', callback_data='at_cart')])
+	return InlineKeyboardMarkup(keyboard)
+
+
+
+def show_chapter_details(update: Update, context: CallbackContext):
+	#print(update)
+	chapter=Chapter.objects.get(id=update.callback_query.data)
+	#articles = Article.objects.filter(chapter=chapter.id)
+	print(chapter.description)
+	articles = chapter.articles.all()
+	
+	reply_markup = get_chapter_details_keyboard(articles)
+	if chapter.description:
+		context.bot.send_message(chat_id=update.effective_chat.id, text=chapter.description, parse_mode='HTML', reply_markup=reply_markup)
+	else:
+		context.bot.send_message(chat_id=update.effective_chat.id, text='*Что Вас интересует?:*', parse_mode='HTML', reply_markup=reply_markup)
+
+	return 'HANDLE_ARTICLE'
+
 
 
 
@@ -35,10 +65,12 @@ def show_main_menu(update: Update, context: CallbackContext):
     reply_markup= get_main_menu_keyboard()
 
     context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='*Пожалуйста, выберите интересующий Вас раздел:*',
-                                 parse_mode=constants.PARSEMODE_MARKDOWN_V2,
+                                 text='Пожалуйста, выберите интересующий Вас раздел:',
+                                 parse_mode='HTML',
                                  reply_markup=reply_markup)
     return 'HANDLE_MENU'
+
+
 
 
 
@@ -71,6 +103,8 @@ def handle_users_reply(update: Update, context: CallbackContext):
 
     states_functions = {
         'START': show_main_menu,
+        'HANDLE_MENU': show_chapter_details,
+        'HANDLE_ARTICLE_DETAILS': show_article_details
     }
     state_handler = states_functions[user_state]
     next_state = state_handler(update, context)
@@ -116,8 +150,6 @@ def main():
 
 
 class Command(BaseCommand):
-
-	
 
 	def handle(self, *args, **options):
 		main()

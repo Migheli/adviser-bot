@@ -11,6 +11,13 @@ class Chapter(models.Model):
     )
 
 
+    description = models.TextField(
+        'Описание',
+        max_length=3000,
+        blank=True
+        )
+
+
     class Meta:
         verbose_name = 'Раздел'
         verbose_name_plural = 'Разделы'
@@ -35,8 +42,8 @@ class Article(models.Model):
 	    Chapter,
 		verbose_name='Раздел',
 		related_name='articles',
-		null=True,
 		blank=True,
+        null=True,
 		on_delete=models.SET_NULL,
 	)
 
