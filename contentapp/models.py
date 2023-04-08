@@ -10,7 +10,7 @@ class Chapter(models.Model):
         max_length=50
     )
 
-    description = models.TextField(
+    text = models.TextField(
         'Описание',
         max_length=3000,
         blank=True
@@ -20,15 +20,18 @@ class Chapter(models.Model):
         verbose_name = 'Раздел'
         verbose_name_plural = 'Разделы'
 
-    def is_with_picture(self):
+    def is_with_pictures(self):
         return len(self.pictures.all()) >= 1 
 
-    def is_with_file(self):
-        return len(self.files.all()) >= 1    
+    def is_with_files(self):
+        return len(self.files.all()) >= 1
 
-    def is_multi_media(self):
-        return self.is_with_picture and self.is_with_file
+    def is_with_text(self):
+        return bool(self.text)   
 
+    def is_text_only(self):
+        return not (self.is_with_files() or self.is_with_pictures())    
+    
     def __str__(self):
         return self.name
 
@@ -58,14 +61,18 @@ class Article(models.Model):
         verbose_name = 'Статья'
         verbose_name_plural = 'Статьи'
 
-    def is_with_picture(self):
+   
+    def is_with_pictures(self):
         return len(self.pictures.all()) >= 1 
 
-    def is_with_file(self):
+    def is_with_files(self):
         return len(self.files.all()) >= 1    
 
-    def is_multi_media(self):
-        return self.is_with_picture and self.is_with_file
+    def is_text_only(self):
+        return not (self.is_with_files() or self.is_with_pictures())
+
+    def is_with_text(self):
+        return bool(self.text)
 
     def __str__(self):
         return self.name
@@ -114,7 +121,13 @@ class Attachment(models.Model):
     )
 
     file = models.FileField('Фaйл-приложение', upload_to='media')
-    
+
+    description = models.CharField(
+            'Название',
+            max_length=50,
+            default='Вложение'
+            )    
+
     article = models.ForeignKey(
         Article,
         on_delete=models.SET_NULL,
