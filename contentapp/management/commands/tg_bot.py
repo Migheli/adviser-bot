@@ -59,13 +59,11 @@ def show_chapter_details(update: Update, context: CallbackContext, db):
 
         return 'HANDLE_MENU'
 
-
     chapter=Chapter.objects.get(id=update.callback_query.data)
     articles = chapter.articles.all()
     keyboard = get_sublevel_posts_keyboard(articles)
     keyboard.append([InlineKeyboardButton('В главное меню', callback_data='to_main_menu')])
     reply_markup = InlineKeyboardMarkup(keyboard)
-
 
     if chapter.is_with_text(): 
         context.bot.edit_message_text(text=chapter.text, chat_id=update.effective_chat.id, message_id=update.callback_query['message']['message_id'])
@@ -75,7 +73,6 @@ def show_chapter_details(update: Update, context: CallbackContext, db):
         if chapter.is_text_only(): 
             return 'HANDLE_ARTICLE'
 
-
     if chapter.is_with_pictures():
         pictures = chapter.pictures.all()
         images = []
@@ -84,33 +81,20 @@ def show_chapter_details(update: Update, context: CallbackContext, db):
                 images.append(InputMediaPhoto(image))
         photo_message = context.bot.send_media_group(chat_id=update.effective_chat.id, media=images)
 
-
     if chapter.is_with_files():
         attachments = chapter.files.all()
         documents = []
         keyboard = [[InlineKeyboardButton(f'получить {attachment.description}', callback_data=attachment.id)] for attachment in attachments]
 
-
-
-
         context.bot.send_message(chat_id=update.effective_chat.id, text=chapter.text, parse_mode='HTML', reply_markup=reply_markup)
     else:
         message = context.bot.send_message(chat_id=update.effective_chat.id, text='Выберите интересующий подраздел', parse_mode='HTML', reply_markup=reply_markup)
+        delete_messages(update, context, db)
+        db.delete(f'{update.effective_chat.id}::messages_to_delete')
         db.rpush(f'{update.effective_chat.id}::messages_to_delete',  message.message_id)    
+ 
+    #delete_messages(update, context, db)
 
-
-    message_id = update.callback_query['message']['message_id']
-
-    context.bot.delete_message(chat_id=update.effective_chat.id, message_id=message_id)
-
-
-    for i in range(MESSAGES_COOUNT):
-        try:
-            message_id = update.callback_query['message']['message_id']
-            context.bot.delete_message(chat_id=update.effective_chat.id, message_id=message_id-i)
-        except BadRequest:
-            print(f'Сработало исключение на сообщении на итераци {i}') # Ошибка создавалась здесь!!!!!!!!!!!!! 
-            pass
 
     return 'HANDLE_ARTICLE'
 
@@ -128,6 +112,7 @@ def show_article_details(update: Update, context: CallbackContext, db):
     keyboard = []
 
     article=Article.objects.get(id=update.callback_query.data)
+    print(len(article.files.all()))
 
     reply_markup = []
 
@@ -168,9 +153,6 @@ def show_article_details(update: Update, context: CallbackContext, db):
 
     delete_messages(update, context, db)
     
-    if InlineKeyboardButton('В главное меню', callback_data='to_main_menu') not in keyboard:
-        keyboard.append([InlineKeyboardButton('В главное меню', callback_data='to_main_menu')])
-    
     reply_markup = InlineKeyboardMarkup(keyboard)
     message = context.bot.send_message(reply_markup=reply_markup, text='нажмите на кнопку, чтобы получить вложение', chat_id=update.effective_chat.id)
     db.rpush(f'{update.effective_chat.id}::messages_to_delete',  message.message_id)    
@@ -198,17 +180,16 @@ def send_attachments(update: Update, context: CallbackContext, db):
         attachment_message = context.bot.send_document(chat_id=update.effective_chat.id, caption=attachment.description, document=document)
 
     message = context.bot.send_message(reply_markup=reply_markup, text='выберите необходимый раздел', chat_id=update.effective_chat.id)
+
     delete_messages(update, context, db)
+    db.delete(f'{update.effective_chat.id}::messages_to_delete')
     db.rpush(f'{update.effective_chat.id}::messages_to_delete',  attachment_message.message_id)    
     db.rpush(f'{update.effective_chat.id}::messages_to_delete',  message.message_id)    
 
 
 def show_main_menu(update: Update, context: CallbackContext, db):
 
-    delete_messages(update, context, db)
-
-
-
+    
     chapters = Chapter.objects.all()
     keyboard = get_sublevel_posts_keyboard(chapters)
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -227,7 +208,7 @@ def show_main_menu(update: Update, context: CallbackContext, db):
     
     db.delete(f'{update.effective_chat.id}::messages_to_delete')
 
-    db.rpush(f'{update.effective_chat.id}::messages_to_delete',  message_to_del_current_state)    
+    db.rpush(f'{update.effective_chat.id}::messages_to_delete', message_to_del_current_state)    
     # удалялось предыдущее сообщение в предшествующей функции
 
     return 'HANDLE_MENU' 
