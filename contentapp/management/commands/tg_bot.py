@@ -62,7 +62,6 @@ def show_chapter_details(update: Update, context: CallbackContext, db):
     chapter=Chapter.objects.get(id=update.callback_query.data)
     articles = chapter.articles.all()
     keyboard = get_sublevel_posts_keyboard(articles)
-    keyboard.append([InlineKeyboardButton('В главное меню', callback_data='to_main_menu')])
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if chapter.is_with_text(): 
