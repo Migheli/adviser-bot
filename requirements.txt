@@ -3,8 +3,7 @@ environs==9.5.0
 dj-database-url==1.2.0
 postgres
 pillow
-adminsortable2
-
+django-admin-sortable
 python-telegram-bot==13.12
 redis
 requests
